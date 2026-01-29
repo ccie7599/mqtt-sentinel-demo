@@ -105,14 +105,14 @@ class AlertPublisher:
             self._connected = False
             logger.error(f"Connection failed: rc={rc}")
 
-    def _on_disconnect(self, client, userdata, rc, properties=None):
+    def _on_disconnect(self, client, userdata, disconnect_flags, rc, properties=None):
         """Handle disconnection callback."""
         self._connected = False
         self._connect_event.clear()
         if rc != 0:
             logger.warning(f"Unexpected disconnect: rc={rc}, will reconnect")
 
-    def _on_publish(self, client, userdata, mid, properties=None):
+    def _on_publish(self, client, userdata, mid, reason_code=None, properties=None):
         """Handle publish confirmation."""
         with self._stats_lock:
             self.messages_sent += 1
@@ -136,8 +136,9 @@ class AlertPublisher:
                         cert_reqs=ssl.CERT_REQUIRED
                     )
                 else:
-                    # Use system CA certificates
-                    self.client.tls_set(cert_reqs=ssl.CERT_REQUIRED)
+                    # Use TLS without certificate verification (for demo/testing)
+                    self.client.tls_set(cert_reqs=ssl.CERT_NONE)
+                    self.client.tls_insecure_set(True)
                 logger.info("TLS enabled")
 
             # Connect
