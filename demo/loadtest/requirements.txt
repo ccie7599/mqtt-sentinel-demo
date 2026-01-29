@@ -1,0 +1,13 @@
+# MQTT Sentinel Load Test Dependencies
+
+# Locust for load testing
+locust>=2.20.0
+
+# MQTT client
+paho-mqtt>=2.0.0
+
+# YAML configuration
+PyYAML>=6.0
+
+# HTTP requests (for health checks)
+requests>=2.31.0

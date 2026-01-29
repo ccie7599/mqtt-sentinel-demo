@@ -1,0 +1,4 @@
+# MQTT Sentinel Alert Publisher Dependencies
+
+# MQTT client
+paho-mqtt>=2.0.0
