@@ -1,6 +1,6 @@
 # MQTT Sentinel
 
-**Secure MQTT at Scale — 2M+ Concurrent Connections**
+**Secure MQTT at Scale — Millions of Concurrent Connections**
 
 MQTT Sentinel is an enterprise-grade security layer for MQTT deployments, providing real-time threat detection, authentication, and message inspection at massive scale.
 
@@ -8,35 +8,58 @@ MQTT Sentinel is an enterprise-grade security layer for MQTT deployments, provid
 
 | Feature | Description |
 |---------|-------------|
-| **Massive Scale** | 1.5M+ concurrent device connections with sub-millisecond latency |
+| **Massive Scale** | Millions of concurrent device connections with sub-millisecond latency |
 | **Fan-Out Distribution** | Efficient alert delivery to millions of subscribers |
 | **Real-Time Security** | Pattern matching, anomaly detection, and threat prevention |
 | **Authentication** | Secure device authentication with automatic credential validation |
 | **Observability** | Comprehensive Grafana dashboards for health and security monitoring |
-| **Message Retention** | 72-hour message history with JetStream persistence |
+| **Message Retention** | 72-hour message history with distributed persistence |
 
 ## Architecture Overview
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                       MQTT SENTINEL                              │
-│            Secure MQTT at Scale — 2M+ Connections                │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│   ┌──────────┐     ┌─────────────────┐     ┌──────────────┐     │
-│   │  1.5M    │────▶│  Sentinel Core  │────▶│   Sentinel   │     │
-│   │ Devices  │     │  (NATS Cluster) │     │  Dashboard   │     │
-│   └──────────┘     └────────┬────────┘     └──────────────┘     │
-│                             │                                    │
-│                             ▼                                    │
-│                    ┌─────────────────┐                          │
-│                    │ Threat Defense  │                          │
-│                    │ • Pattern Match │                          │
-│                    │ • Anomaly Det.  │                          │
-│                    │ • Auth Verify   │                          │
-│                    └─────────────────┘                          │
-│                                                                  │
-└─────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                              CUSTOMER ORIGIN                                     │
+│                                                                                  │
+│  ┌─────────────┐         ┌─────────────┐                                        │
+│  │   Auth DB   │         │  Mosquitto  │                                        │
+│  │  (Clients)  │         │   Broker    │                                        │
+│  └──────▲──────┘         └──────┬──────┘                                        │
+│         │                       │                                                │
+└─────────┼───────────────────────┼───────────────────────────────────────────────┘
+          │                       │
+          │ Auth Callout          │ WebSocket Bridge
+          │ (in-band)             ▼
+          │              ┌────────────────┐
+          │              │      WAF       │
+          │              └───────┬────────┘
+          │                      │
+          │                      ▼
+┌─────────┼──────────────────────────────────────────────────────────────────────┐
+│         │                  MQTT SENTINEL                                        │
+│         │     Secure MQTT at Scale — Millions of Connections                    │
+├─────────┼──────────────────────────────────────────────────────────────────────┤
+│         │                                                                       │
+│  ┌──────┴────────────────────────────────────────────────────────────────────┐ │
+│  │              Distributed Real-Time Message Broker                          │ │
+│  │                    (72-hour message retention)                             │ │
+│  └─────────────────────────────────┬─────────────────────────────────────────┘ │
+│                                    │                                            │
+│     ┌──────────────────────────────┼──────────────────────────────┐            │
+│     │                              │                              │            │
+│     ▼                              ▼                              ▼            │
+│ ┌────────┐                    ┌────────┐                    ┌──────────┐       │
+│ │ user1  │                    │ user2  │        ...         │ user N   │       │
+│ │(client)│                    │(client)│                    │ (client) │       │
+│ └────────┘                    └────────┘                    └──────────┘       │
+│                                                                                 │
+│  ┌─────────────────┐     ┌──────────────┐                                      │
+│  │ Threat Defense  │     │   Sentinel   │                                      │
+│  │ • Pattern Match │     │  Dashboard   │                                      │
+│  │ • Anomaly Det.  │     │  (Grafana)   │                                      │
+│  └─────────────────┘     └──────────────┘                                      │
+│                                                                                 │
+└────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ## Demo Scenario
@@ -133,29 +156,39 @@ Track security events including:
 ## Message Flow
 
 ```
-┌─────────────┐     MQTT/TLS      ┌─────────────┐
-│   Alert     │ ────────────────▶ │  Mosquitto  │
-│  Publisher  │  ~600 msg/sec     │  (Upstream) │
-└─────────────┘                   └──────┬──────┘
-                                         │
-                                         │ Bridge Service
-                                         ▼
-┌─────────────────────────────────────────────────────────────┐
-│                    MQTT SENTINEL                             │
-│  ┌─────────────────────────────────────────────────────┐    │
-│  │              NATS JetStream Cluster                  │    │
-│  │  Stream: MQTT_ALERTS (72hr retention)               │    │
-│  │  Subjects: clients.*.alerts                         │    │
-│  └─────────────────────────┬───────────────────────────┘    │
-│                            │                                 │
-│      ┌─────────────────────┼─────────────────────┐          │
-│      ▼                     ▼                     ▼          │
-│  ┌───────┐            ┌───────┐           ┌───────────┐    │
-│  │ user1 │            │ user2 │           │ user1.5M  │    │
-│  └───────┘            └───────┘           └───────────┘    │
-│                                                             │
-│  Each device receives ONLY alerts for their own topic       │
-└─────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           CUSTOMER ORIGIN                                    │
+│                                                                              │
+│  ┌─────────────┐        ┌─────────────┐                                     │
+│  │   Auth DB   │        │  Mosquitto  │◀─── Alert Publisher (~600 msg/sec)  │
+│  │  (Clients)  │        │   Broker    │                                     │
+│  └──────▲──────┘        └──────┬──────┘                                     │
+│         │                      │                                             │
+└─────────┼──────────────────────┼────────────────────────────────────────────┘
+          │                      │
+          │ Auth Callout         │ WebSocket Bridge
+          │ (in-band)            ▼
+          │             ┌────────────────┐
+          │             │      WAF       │
+          │             └───────┬────────┘
+          │                     │
+          │                     ▼
+┌─────────┼───────────────────────────────────────────────────────────────────┐
+│         │                  MQTT SENTINEL                                     │
+│  ┌──────┴────────────────────────────────────────────────────────────────┐  │
+│  │           Distributed Real-Time Message Broker                         │  │
+│  │                  (72-hour message retention)                           │  │
+│  │               Topics: clients/{client_id}/alerts                       │  │
+│  └─────────────────────────────┬─────────────────────────────────────────┘  │
+│                                │                                             │
+│      ┌─────────────────────────┼─────────────────────────┐                  │
+│      ▼                         ▼                         ▼                  │
+│  ┌───────┐                ┌───────┐               ┌───────────┐            │
+│  │ user1 │                │ user2 │      ...      │  user N   │            │
+│  └───────┘                └───────┘               └───────────┘            │
+│                                                                             │
+│  Each device receives ONLY alerts for their own topic                       │
+└─────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ## License
