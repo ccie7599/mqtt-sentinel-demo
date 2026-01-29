@@ -1,0 +1,48 @@
+# MQTT Sentinel Load Test Configuration
+#
+# This file configures the Locust load test for fan-out subscriber simulation.
+# Environment variables take precedence over these settings.
+
+# MQTT Broker Configuration
+mqtt_broker: "localhost"
+mqtt_port: 1883
+
+# For TLS connections
+# mqtt_port: 8883
+# use_tls: true
+# ca_cert_path: "/path/to/ca.crt"
+
+# Disable TLS for local testing
+use_tls: false
+
+# NATS URL (if connecting directly to NATS)
+nats_url: "nats://localhost:4222"
+
+# User Pool Configuration
+# Total number of users in the database (user1 to userN)
+user_max: 1500000
+
+# Topic pattern for alert subscriptions
+# {client_id} is replaced with the user's client ID
+topic_pattern: "clients/{client_id}/alerts"
+
+# Load Test Parameters (for reference - set via Locust UI/CLI)
+#
+# Recommended settings for full demo:
+#   Users: 1000-10000 (subset of 1.5M for local testing)
+#   Spawn rate: 100/sec
+#   Run time: 10m
+#
+# For production scale testing:
+#   Users: 100000+
+#   Spawn rate: 1000/sec
+#   Run time: 1h
+#   Use distributed mode with multiple workers
+
+# Connection settings
+keepalive: 60
+reconnect_delay: 5
+
+# Timeouts (in seconds)
+connect_timeout: 10
+subscribe_timeout: 5
