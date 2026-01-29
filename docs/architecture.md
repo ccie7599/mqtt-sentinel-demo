@@ -140,8 +140,7 @@ This ensures:
         │                    │                    │
         ▼                    ▼                    ▼
 ┌───────────────┐    ┌───────────────┐    ┌───────────────┐
-│   US-EAST     │    │   EU-WEST     │    │   AP-SOUTH    │
-│   Region      │    │   Region      │    │   Region      │
+│   Region A    │    │   Region B    │    │   Region C    │
 │               │    │               │    │               │
 │ • Broker Node │    │ • Broker Node │    │ • Broker Node │
 │ • Inspector   │    │ • Inspector   │    │ • Inspector   │
@@ -158,13 +157,6 @@ This ensures:
               │  └────────┘  └────────┘  │
               └──────────────────────────┘
 ```
-
-### Regional Distribution
-
-Default client distribution across regions:
-- **US-EAST**: 50% (750,000 clients)
-- **EU-WEST**: 30% (450,000 clients)
-- **AP-SOUTH**: 20% (300,000 clients)
 
 ## Performance Characteristics
 
