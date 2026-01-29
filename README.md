@@ -194,7 +194,3 @@ Track security events including:
 ## License
 
 Apache License 2.0 — See [LICENSE](LICENSE) for details.
-
-## Support
-
-For enterprise support and licensing inquiries, contact your MQTT Sentinel representative.
