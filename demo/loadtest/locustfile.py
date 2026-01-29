@@ -104,7 +104,9 @@ class MQTTSubscriberClient:
                         cert_reqs=ssl.CERT_REQUIRED
                     )
                 else:
-                    self.client.tls_set(cert_reqs=ssl.CERT_REQUIRED)
+                    # Use TLS without certificate verification (for demo/testing)
+                    self.client.tls_set(cert_reqs=ssl.CERT_NONE)
+                    self.client.tls_insecure_set(True)
 
             # Set credentials (client_id only auth for demo)
             self.client.username_pw_set(username=self.client_id, password="")
