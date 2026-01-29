@@ -8,7 +8,7 @@ MQTT Sentinel is an enterprise-grade security layer for MQTT deployments, provid
 
 | Feature | Description |
 |---------|-------------|
-| **Massive Scale** | Millions of concurrent device connections with sub-millisecond latency |
+| **Massive Scale** | Millions of concurrent device connections with realtime latency |
 | **Fan-Out Distribution** | Efficient alert delivery to millions of subscribers |
 | **Real-Time Security** | Pattern matching, anomaly detection, and threat prevention |
 | **Authentication** | Secure device authentication with automatic credential validation |
