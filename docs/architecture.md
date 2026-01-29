@@ -6,13 +6,13 @@ MQTT Sentinel provides a secure, scalable MQTT infrastructure capable of handlin
 
 ## System Components
 
-### Sentinel Core (NATS Cluster)
+### Sentinel Core (Distributed Real-Time Message Broker)
 
-The heart of MQTT Sentinel is a distributed NATS cluster that provides:
+The heart of MQTT Sentinel is a distributed message broker cluster that provides:
 
 - **Horizontal Scalability**: Add nodes to handle increased load
 - **High Availability**: Automatic failover with no message loss
-- **JetStream Persistence**: Durable message storage with configurable retention
+- **Durable Persistence**: Message storage with configurable retention
 - **Geographic Distribution**: Multi-region deployment support
 
 ### Threat Defense Layer
@@ -45,11 +45,12 @@ All messages pass through the security inspection pipeline:
 
 ### Authentication Service
 
-Device authentication is handled through:
+Device authentication is handled through in-band Auth Callout:
 
-- Client ID validation against registered device database
-- Automatic credential verification
-- Regional distribution for low-latency auth decisions
+- Client connects to MQTT Sentinel
+- Sentinel makes Auth Callout request to customer's Auth DB
+- Auth DB validates client credentials and returns permissions
+- Sentinel accepts or rejects connection based on response
 - Audit logging of all authentication events
 
 ### Observability Stack
@@ -62,41 +63,55 @@ Complete visibility into system behavior:
 
 ## Message Flow
 
+### Full System Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                              CUSTOMER ORIGIN                                     │
+│                                                                                  │
+│  ┌─────────────┐         ┌─────────────┐                                        │
+│  │   Auth DB   │         │  Mosquitto  │◀─── Alert Publisher (~600 msg/sec)     │
+│  │  (Clients)  │         │   Broker    │                                        │
+│  └──────▲──────┘         └──────┬──────┘                                        │
+│         │                       │                                                │
+└─────────┼───────────────────────┼───────────────────────────────────────────────┘
+          │                       │
+          │ Auth Callout          │ WebSocket Bridge
+          │ (in-band)             ▼
+          │              ┌────────────────┐
+          │              │      WAF       │
+          │              └───────┬────────┘
+          │                      │
+          │                      ▼
+┌─────────┼──────────────────────────────────────────────────────────────────────┐
+│         │                  MQTT SENTINEL                                        │
+│         │     Secure MQTT at Scale — Millions of Connections                    │
+├─────────┼──────────────────────────────────────────────────────────────────────┤
+│         │                                                                       │
+│  ┌──────┴────────────────────────────────────────────────────────────────────┐ │
+│  │              Distributed Real-Time Message Broker                          │ │
+│  │                    (72-hour message retention)                             │ │
+│  └─────────────────────────────────┬─────────────────────────────────────────┘ │
+│                                    │                                            │
+│     ┌──────────────────────────────┼──────────────────────────────┐            │
+│     │                              │                              │            │
+│     ▼                              ▼                              ▼            │
+│ ┌────────┐                    ┌────────┐                    ┌──────────┐       │
+│ │ user1  │                    │ user2  │        ...         │ user N   │       │
+│ │(client)│                    │(client)│                    │ (client) │       │
+│ └────────┘                    └────────┘                    └──────────┘       │
+│                                                                                 │
+└────────────────────────────────────────────────────────────────────────────────┘
+```
+
 ### Fan-Out Alert Distribution
 
 The demo showcases efficient alert distribution to millions of subscribers:
 
-1. **Publisher** sends alerts to upstream Mosquitto broker
-2. **Bridge Service** replicates messages to NATS cluster
-3. **NATS JetStream** persists messages with 72-hour retention
+1. **Publisher** sends alerts to upstream Mosquitto broker (Customer Origin)
+2. **WebSocket Bridge** connects Mosquitto to MQTT Sentinel through WAF
+3. **Distributed Broker** persists messages with 72-hour retention
 4. **Subscribers** receive alerts on their individual topics
-
-```
-Publisher (600 msg/sec)
-        │
-        ▼
-┌───────────────┐
-│   Mosquitto   │
-│   (Upstream)  │
-└───────┬───────┘
-        │
-        ▼
-┌───────────────────────────────────────┐
-│         NATS JetStream Cluster        │
-│                                       │
-│  Stream: MQTT_ALERTS                  │
-│  Retention: 72 hours                  │
-│  Replicas: 3                          │
-│                                       │
-│  Subjects: clients.*.alerts           │
-└───────────────────────────────────────┘
-        │
-        ├─────────────────┬─────────────────┐
-        ▼                 ▼                 ▼
-    ┌───────┐         ┌───────┐         ┌───────┐
-    │ user1 │         │ user2 │         │ userN │
-    └───────┘         └───────┘         └───────┘
-```
 
 ### Topic Structure
 
@@ -128,17 +143,20 @@ This ensures:
 │   US-EAST     │    │   EU-WEST     │    │   AP-SOUTH    │
 │   Region      │    │   Region      │    │   Region      │
 │               │    │               │    │               │
-│ • NATS Node   │    │ • NATS Node   │    │ • NATS Node   │
+│ • Broker Node │    │ • Broker Node │    │ • Broker Node │
 │ • Inspector   │    │ • Inspector   │    │ • Inspector   │
 │ • Auth Cache  │    │ • Auth Cache  │    │ • Auth Cache  │
 └───────────────┘    └───────────────┘    └───────────────┘
         │                    │                    │
         └────────────────────┼────────────────────┘
                              │
-                    ┌────────┴────────┐
-                    │  Central Auth   │
-                    │    Database     │
-                    └─────────────────┘
+                             ▼
+              ┌──────────────────────────┐
+              │     CUSTOMER ORIGIN      │
+              │  ┌────────┐  ┌────────┐  │
+              │  │Auth DB │  │Mosquitto│ │
+              │  └────────┘  └────────┘  │
+              └──────────────────────────┘
 ```
 
 ### Regional Distribution
@@ -158,7 +176,7 @@ Default client distribution across regions:
 | Message Delivery (P99) | < 50ms |
 | Availability | 99.99% |
 
-## JetStream Configuration
+## Broker Configuration
 
 Message persistence configuration for 72-hour retention:
 
@@ -178,6 +196,7 @@ streams:
 
 - All external connections use TLS 1.3
 - Inter-node communication encrypted
+- In-band Auth Callout to customer Auth DB
 - Audit logging for compliance
 - Rate limiting at multiple layers
 - Pattern-based threat detection
