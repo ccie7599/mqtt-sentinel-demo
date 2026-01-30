@@ -171,7 +171,7 @@ class MQTTSubscriberClient:
             )
             logger.warning(f"{self.client_id} connection failed: rc={rc}")
 
-    def _on_disconnect(self, client, userdata, rc, properties=None):
+    def _on_disconnect(self, client, userdata, disconnect_flags, rc, properties=None):
         """Handle disconnection callback."""
         self._connected = False
         if rc != 0:
@@ -279,31 +279,26 @@ class AlertSubscriber(User):
         time.sleep(1)
 
 
-class BurstSubscriber(User):
-    """
-    Subscriber that connects/disconnects frequently to test connection handling.
-    Lower weight means fewer of these users.
-    """
-
-    wait_time = between(5, 15)
-    weight = 1  # Low weight - few burst subscribers
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        user_num = random.randint(1, CONFIG['user_max'])
-        self.client_id = f"burst-user{user_num}"
-        self.mqtt_client: Optional[MQTTSubscriberClient] = None
-
-    @task
-    def connect_disconnect_cycle(self):
-        """Rapidly connect, subscribe, wait briefly, then disconnect."""
-        self.mqtt_client = MQTTSubscriberClient(self.client_id, self.environment)
-
-        if self.mqtt_client.connect():
-            # Stay connected briefly
-            time.sleep(random.uniform(2, 5))
-
-        self.mqtt_client.disconnect()
+# BurstSubscriber disabled - uses non-existent user prefix
+# class BurstSubscriber(User):
+#     """
+#     Subscriber that connects/disconnects frequently to test connection handling.
+#     """
+#     wait_time = between(5, 15)
+#     weight = 1
+#
+#     def __init__(self, *args, **kwargs):
+#         super().__init__(*args, **kwargs)
+#         user_num = random.randint(1, CONFIG['user_max'])
+#         self.client_id = f"user{user_num}"  # Use valid user prefix
+#         self.mqtt_client: Optional[MQTTSubscriberClient] = None
+#
+#     @task
+#     def connect_disconnect_cycle(self):
+#         self.mqtt_client = MQTTSubscriberClient(self.client_id, self.environment)
+#         if self.mqtt_client.connect():
+#             time.sleep(random.uniform(2, 5))
+#         self.mqtt_client.disconnect()
 
 
 # Event hooks for custom reporting
