@@ -11,3 +11,6 @@ PyYAML>=6.0
 
 # HTTP requests (for health checks)
 requests>=2.31.0
+
+# MySQL connector (for populate_users.py)
+mysql-connector-python>=8.0.0
