@@ -1,0 +1,33 @@
+#cloud-config
+# Cloud-init for Locust worker VMs
+# Use with Linode StackScript or directly
+
+package_update: true
+package_upgrade: true
+
+packages:
+  - python3
+  - python3-pip
+  - python3-venv
+  - git
+  - htop
+  - iotop
+
+runcmd:
+  - cd /opt
+  - git clone https://github.com/ccie7599/mqtt-sentinel-demo.git
+  - cd mqtt-sentinel-demo/demo/loadtest
+  - python3 -m venv venv
+  - /opt/mqtt-sentinel-demo/demo/loadtest/venv/bin/pip install locust paho-mqtt pyyaml
+  - |
+    cat > /opt/mqtt-sentinel-demo/demo/loadtest/config.yaml << 'EOF'
+    mqtt_broker: "mqtt.connected-cloud.io"
+    mqtt_port: 30883
+    use_tls: true
+    user_max: 50000
+    topic_pattern: "clients/{client_id}/alerts"
+    keepalive: 60
+    EOF
+  - echo "Locust worker ready. Connect with: locust -f locustfile.py --worker --master-host=<MASTER>" > /etc/motd
+
+final_message: "Locust worker VM ready after $UPTIME seconds"
