@@ -4,23 +4,21 @@
 # Environment variables take precedence over these settings.
 
 # MQTT Broker Configuration
-mqtt_broker: "localhost"
-mqtt_port: 1883
+# Using NodePort for high-scale (bypasses LoadBalancer 10K limit)
+mqtt_broker: "mqtt.connected-cloud.io"
+mqtt_port: 30883
 
-# For TLS connections
-# mqtt_port: 8883
-# use_tls: true
+# TLS enabled
+use_tls: true
+# Skip cert verification for demo (cert is for mqtt.connected-cloud.io)
 # ca_cert_path: "/path/to/ca.crt"
-
-# Disable TLS for local testing
-use_tls: false
 
 # NATS URL (if connecting directly to NATS)
 nats_url: "nats://localhost:4222"
 
 # User Pool Configuration
 # Total number of users in the database (user1 to userN)
-user_max: 1500000
+user_max: 50000
 
 # Topic pattern for alert subscriptions
 # {client_id} is replaced with the user's client ID
