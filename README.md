@@ -27,7 +27,7 @@ MQTT Sentinel operates as a transparent security layer between IoT devices and y
 | **Application Layer Protection** | MQTT 3.1.1 protocol validation at the proxy, plus deep payload inspection at the broker (SQL injection, XSS, command injection, path traversal detection). |
 | **Origin Protection** | MQTT protocol converted to WebSockets by the Bridge Service, making all traffic inspectable by your existing WAF (Akamai / F5). No direct MQTT exposure to origin. |
 | **Total Observability** | Prometheus metrics and Grafana dashboards across all layers — proxy connections, rate limit events, auth results, inspection findings, and bridge throughput. |
-| **Performance & Scale** | 1,000,000+ concurrent connections, sub-50ms message delivery (P99), 72-hour message retention with 3x replication. |
+| **Performance & Scale** | 1,000,000+ concurrent connections, 72-hour message retention with 3x replication. |
 
 ## Detailed Diagrams
 
@@ -125,7 +125,7 @@ locust -f locustfile.py --host=mqtts://mqtt.connected-cloud.io:30883
 | Concurrent Connections | 1,000,000+ |
 | Message Throughput | 600+ msg/sec |
 | Auth Latency (P99) | < 10ms |
-| Message Delivery (P99) | < 50ms |
+| Message Delivery (P99) | Regional: < 50ms, Cross-region: < 200ms |
 | Availability | 99.99% |
 | Message Retention | 72 hours |
 
