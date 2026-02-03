@@ -1,0 +1,229 @@
+<mxfile host="app.diagrams.net" modified="2026-02-03" agent="draw.io" type="device">
+  <diagram id="arch-overview" name="Architecture Overview">
+    <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Title -->
+        <mxCell id="title" value="MQTT Sentinel — End-to-End Architecture" style="text;html=1;fontSize=22;fontStyle=1;align=center;verticalAlign=middle;fillColor=none;strokeColor=none;fontColor=#1a1a2e;" vertex="1" parent="1">
+          <mxGeometry x="400" y="10" width="800" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- IoT Devices -->
+        <mxCell id="devices-group" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;dashed=1;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="40" y="70" width="280" height="160" as="geometry" />
+        </mxCell>
+        <mxCell id="devices-label" value="IoT Devices" style="text;html=1;fontSize=14;fontStyle=1;align=center;fillColor=none;strokeColor=none;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="100" y="75" width="160" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="dev1" value="Device 1" style="shape=mxgraph.cisco.computers_and_peripherals.generic_appliance;sketch=0;html=1;fillColor=#036897;strokeColor=none;fontColor=#ffffff;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="60" y="115" width="50" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="dev2" value="Device 2" style="shape=mxgraph.cisco.computers_and_peripherals.generic_appliance;sketch=0;html=1;fillColor=#036897;strokeColor=none;fontColor=#ffffff;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="140" y="115" width="50" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="dev-n" value="Device N" style="shape=mxgraph.cisco.computers_and_peripherals.generic_appliance;sketch=0;html=1;fillColor=#036897;strokeColor=none;fontColor=#ffffff;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="220" y="115" width="50" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="dev-dots" value="..." style="text;html=1;fontSize=16;fontStyle=1;align=center;fillColor=none;strokeColor=none;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="190" y="115" width="30" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="dev-protocol" value="MQTT / TLS 1.3" style="text;html=1;fontSize=11;align=center;fillColor=none;strokeColor=none;fontColor=#666666;fontStyle=2;" vertex="1" parent="1">
+          <mxGeometry x="90" y="170" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="dev-count" value="1,000,000+ concurrent connections" style="text;html=1;fontSize=10;align=center;fillColor=none;strokeColor=none;fontColor=#999999;" vertex="1" parent="1">
+          <mxGeometry x="60" y="192" width="240" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Arrow: Devices to Proxy -->
+        <mxCell id="arrow-dev-proxy" value="" style="endArrow=block;endFill=1;html=1;strokeWidth=3;strokeColor=#0066cc;entryX=0;entryY=0.5;exitX=1;exitY=0.5;" edge="1" parent="1" source="devices-group" target="proxy-group">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arrow-dev-proxy-label" value="MQTTS :8883" style="edgeLabel;html=1;align=center;verticalAlign=middle;fontSize=10;fontColor=#0066cc;fontStyle=1;labelBackgroundColor=#ffffff;" vertex="1" connectable="0" parent="arrow-dev-proxy">
+          <mxGeometry x="-0.1" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- MQTT Sentinel Platform Box -->
+        <mxCell id="sentinel-platform" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e6f2ff;strokeColor=#0066cc;strokeWidth=2;arcSize=5;" vertex="1" parent="1">
+          <mxGeometry x="370" y="55" width="850" height="520" as="geometry" />
+        </mxCell>
+        <mxCell id="sentinel-label" value="MQTT Sentinel Platform" style="text;html=1;fontSize=16;fontStyle=1;align=left;fillColor=none;strokeColor=none;fontColor=#0066cc;" vertex="1" parent="1">
+          <mxGeometry x="385" y="60" width="250" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Proxy Layer -->
+        <mxCell id="proxy-group" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="400" y="100" width="790" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="proxy-label" value="Proxy Layer  (Distributed, Multi-Region)" style="text;html=1;fontSize=14;fontStyle=1;align=left;fillColor=none;strokeColor=none;fontColor=#1a3a5c;" vertex="1" parent="1">
+          <mxGeometry x="415" y="105" width="350" height="25" as="geometry" />
+        </mxCell>
+
+        <mxCell id="proxy-tls" value="TLS&#xa;Termination" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0050ef;fontColor=#ffffff;strokeColor=#001DBC;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="420" y="140" width="100" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="proxy-rate" value="Rate&#xa;Limiting" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0050ef;fontColor=#ffffff;strokeColor=#001DBC;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="540" y="140" width="100" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="proxy-auth" value="Auth&#xa;Callout" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0050ef;fontColor=#ffffff;strokeColor=#001DBC;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="660" y="140" width="100" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="proxy-valid" value="MQTT&#xa;Validation" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0050ef;fontColor=#ffffff;strokeColor=#001DBC;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="780" y="140" width="100" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="proxy-ddos" value="L3/L4 DDoS&#xa;Protection" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0050ef;fontColor=#ffffff;strokeColor=#001DBC;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="900" y="140" width="100" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Proxy internal arrows -->
+        <mxCell id="p-arrow1" value="" style="endArrow=block;endFill=1;html=1;strokeWidth=1;strokeColor=#6c8ebf;" edge="1" parent="1" source="proxy-tls" target="proxy-rate">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p-arrow2" value="" style="endArrow=block;endFill=1;html=1;strokeWidth=1;strokeColor=#6c8ebf;" edge="1" parent="1" source="proxy-rate" target="proxy-auth">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p-arrow3" value="" style="endArrow=block;endFill=1;html=1;strokeWidth=1;strokeColor=#6c8ebf;" edge="1" parent="1" source="proxy-auth" target="proxy-valid">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Arrow: Proxy to Broker -->
+        <mxCell id="arrow-proxy-broker" value="" style="endArrow=block;endFill=1;html=1;strokeWidth=3;strokeColor=#0066cc;" edge="1" parent="1" source="proxy-group" target="broker-group">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Core Broker Layer -->
+        <mxCell id="broker-group" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="400" y="260" width="790" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="broker-label" value="Core Broker Layer" style="text;html=1;fontSize=14;fontStyle=1;align=left;fillColor=none;strokeColor=none;fontColor=#2d5016;" vertex="1" parent="1">
+          <mxGeometry x="415" y="265" width="250" height="25" as="geometry" />
+        </mxCell>
+
+        <mxCell id="broker-inspect" value="Payload&#xa;Inspection" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2d7600;fontColor=#ffffff;strokeColor=#185200;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="420" y="300" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="broker-anomaly" value="Anomaly&#xa;Detection" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2d7600;fontColor=#ffffff;strokeColor=#18500;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="560" y="300" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="broker-buffer" value="Message Buffering&#xa;(72-hr retention)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2d7600;fontColor=#ffffff;strokeColor=#18500;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="700" y="300" width="140" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="broker-fanout" value="Fan-Out&#xa;Distribution" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2d7600;fontColor=#ffffff;strokeColor=#18500;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="860" y="300" width="120" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Arrow: Broker to Bridge -->
+        <mxCell id="arrow-broker-bridge" value="" style="endArrow=block;endFill=1;html=1;strokeWidth=3;strokeColor=#0066cc;" edge="1" parent="1" source="broker-group" target="bridge-group">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Bridge Service -->
+        <mxCell id="bridge-group" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="400" y="420" width="790" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="bridge-label" value="Bridge Service" style="text;html=1;fontSize=14;fontStyle=1;align=left;fillColor=none;strokeColor=none;fontColor=#7a6000;" vertex="1" parent="1">
+          <mxGeometry x="415" y="425" width="150" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="bridge-convert" value="MQTT → WebSocket Protocol Conversion    |    WAF-Friendly Traffic Transformation" style="text;html=1;fontSize=12;align=center;fillColor=none;strokeColor=none;fontColor=#7a6000;fontStyle=2;" vertex="1" parent="1">
+          <mxGeometry x="560" y="438" width="600" height="25" as="geometry" />
+        </mxCell>
+
+        <!-- Arrow: Bridge to WAF -->
+        <mxCell id="arrow-bridge-waf" value="" style="endArrow=block;endFill=1;html=1;strokeWidth=3;strokeColor=#cc6600;" edge="1" parent="1" source="bridge-group" target="waf-box">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arrow-bridge-waf-label" value="WebSocket (WSS)" style="edgeLabel;html=1;align=center;verticalAlign=middle;fontSize=10;fontColor=#cc6600;fontStyle=1;labelBackgroundColor=#ffffff;" vertex="1" connectable="0" parent="arrow-bridge-waf">
+          <mxGeometry x="-0.1" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Observability (side) -->
+        <mxCell id="obs-group" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="1250" y="100" width="170" height="280" as="geometry" />
+        </mxCell>
+        <mxCell id="obs-label" value="Observability" style="text;html=1;fontSize=13;fontStyle=1;align=center;fillColor=none;strokeColor=none;fontColor=#5c3566;" vertex="1" parent="1">
+          <mxGeometry x="1260" y="105" width="150" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="obs-prom" value="Prometheus" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#7c3aed;fontColor=#ffffff;strokeColor=#5b21b6;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1270" y="145" width="130" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="obs-grafana" value="Grafana&#xa;Dashboards" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#7c3aed;fontColor=#ffffff;strokeColor=#5b21b6;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1270" y="205" width="130" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="obs-alerts" value="Alerting" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#7c3aed;fontColor=#ffffff;strokeColor=#5b21b6;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1270" y="265" width="130" height="45" as="geometry" />
+        </mxCell>
+
+        <!-- Dashed arrows from layers to observability -->
+        <mxCell id="obs-arrow1" value="" style="endArrow=open;endFill=0;html=1;strokeWidth=1;strokeColor=#9673a6;dashed=1;" edge="1" parent="1" source="proxy-group" target="obs-group">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="obs-arrow2" value="" style="endArrow=open;endFill=0;html=1;strokeWidth=1;strokeColor=#9673a6;dashed=1;" edge="1" parent="1" source="broker-group" target="obs-group">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Customer WAF -->
+        <mxCell id="waf-box" value="Customer WAF&#xa;(Akamai / F5)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;strokeWidth=2;fontSize=13;fontStyle=1;fontColor=#7a1a1a;" vertex="1" parent="1">
+          <mxGeometry x="640" y="540" width="320" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Arrow: WAF to Origin -->
+        <mxCell id="arrow-waf-origin" value="" style="endArrow=block;endFill=1;html=1;strokeWidth=3;strokeColor=#cc0000;" edge="1" parent="1" source="waf-box" target="origin-group">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Customer Origin -->
+        <mxCell id="origin-group" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff5f5;strokeColor=#cc0000;strokeWidth=2;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="440" y="640" width="720" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="origin-label" value="Customer Origin" style="text;html=1;fontSize=14;fontStyle=1;align=left;fillColor=none;strokeColor=none;fontColor=#cc0000;" vertex="1" parent="1">
+          <mxGeometry x="455" y="645" width="200" height="25" as="geometry" />
+        </mxCell>
+
+        <mxCell id="origin-envoy" value="Envoy&#xa;Proxy" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#cc0000;fontColor=#ffffff;strokeColor=#990000;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="480" y="685" width="110" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="origin-mosquitto" value="Mosquitto&#xa;Broker" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#cc0000;fontColor=#ffffff;strokeColor=#990000;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="620" y="685" width="110" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="origin-percona" value="PerconaDB&#xa;(Auth Database)" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=10;fillColor=#cc0000;fontColor=#ffffff;strokeColor=#990000;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="770" y="680" width="120" height="65" as="geometry" />
+        </mxCell>
+        <mxCell id="origin-arrow1" value="" style="endArrow=block;endFill=1;html=1;strokeWidth=1;strokeColor=#990000;" edge="1" parent="1" source="origin-envoy" target="origin-mosquitto">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Auth callout dashed arrow from proxy to PerconaDB -->
+        <mxCell id="auth-callout-arrow" value="" style="endArrow=block;endFill=1;html=1;strokeWidth=2;strokeColor=#cc0000;dashed=1;dashPattern=8 4;curved=1;exitX=0.8;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="proxy-auth" target="origin-percona">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1100" y="210" />
+              <mxPoint x="1150" y="500" />
+              <mxPoint x="830" y="620" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="auth-callout-label" value="Auth Callout" style="edgeLabel;html=1;align=center;verticalAlign=middle;fontSize=11;fontColor=#cc0000;fontStyle=3;labelBackgroundColor=#ffffff;" vertex="1" connectable="0" parent="auth-callout-arrow">
+          <mxGeometry x="0.3" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Region badges -->
+        <mxCell id="region1" value="US-East" style="shape=hexagon;perimeter=hexagonPerimeter2;whiteSpace=wrap;html=1;fixedSize=1;size=10;fillColor=#0050ef;fontColor=#ffffff;strokeColor=none;fontSize=9;" vertex="1" parent="1">
+          <mxGeometry x="1020" y="105" width="70" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="region2" value="US-West" style="shape=hexagon;perimeter=hexagonPerimeter2;whiteSpace=wrap;html=1;fixedSize=1;size=10;fillColor=#0050ef;fontColor=#ffffff;strokeColor=none;fontSize=9;" vertex="1" parent="1">
+          <mxGeometry x="1095" y="105" width="70" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="region3" value="EU-West" style="shape=hexagon;perimeter=hexagonPerimeter2;whiteSpace=wrap;html=1;fixedSize=1;size=10;fillColor=#0050ef;fontColor=#ffffff;strokeColor=none;fontSize=9;" vertex="1" parent="1">
+          <mxGeometry x="1170" y="105" width="70" height="25" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
