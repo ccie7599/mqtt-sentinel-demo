@@ -221,6 +221,6 @@ Grafana dashboards provide real-time visibility into:
 | Concurrent Connections | 1,000,000+ |
 | Message Throughput | 600+ msg/sec |
 | Auth Latency (P99) | < 10ms |
-| Message Delivery (P99) | < 50ms |
+| Message Delivery (P99) | Regional: < 50ms, Cross-region: < 200ms |
 | Availability | 99.99% |
 | Message Retention | 72 hours |
