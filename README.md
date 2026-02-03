@@ -101,22 +101,72 @@ locust -f locustfile.py --host=mqtts://mqtt.connected-cloud.io:30883
 - [Architecture Details](docs/architecture.md) — Detailed system design with proxy, broker, bridge, and origin layers
 - [Security Features](docs/security-features.md) — Threat detection capabilities across all layers
 
-## Dashboards
+## Dashboard — MQTT Security Dashboard
 
-### Sentinel Health Dashboard
-- Connected device count across all proxy regions
-- Message throughput and fan-out delivery rate
-- Auth latency (P50, P95, P99)
-- Message retention and buffer utilization
-- Cluster health status
+The Grafana dashboard provides real-time visibility across the entire platform. Panels are organized into the following sections:
 
-### Sentinel Security Dashboard
-- Threat score indicator
-- Rate limit rejections by tier (global, per-IP, per-client)
-- Authentication failures per minute
-- Pattern violations detected (SQLi, XSS, command injection)
-- Anomaly events (rate, size, entropy)
-- Security event log (50 most recent)
+### Overview
+
+| Panel | Type | Description |
+|-------|------|-------------|
+| Connection Rate | Stat | Rate of new MQTT connections per second |
+| Active Proxy Connections | Stat | Currently active connections through the proxy layer |
+| Active MQTT Sessions | Stat | Total active sessions on the core broker |
+| Auth Success Rate | Gauge | Percentage of successful authentication requests |
+| Rate Limit Rejection % | Gauge | Percentage of requests rejected by rate limiting |
+
+### Rate Limiting
+
+| Panel | Type | Description |
+|-------|------|-------------|
+| Rate Limits by Type | Time series | Rate limit events by tier (global, per-IP, per-client, CONNECT, PUBLISH, SUBSCRIBE) |
+| Rejections by Type | Time series | Rejected requests by rate limit tier |
+
+### Authentication
+
+| Panel | Type | Description |
+|-------|------|-------------|
+| Auth Requests by Result | Time series | Auth outcomes: allowed, denied, cache hit, error |
+| Auth Latency (P50/P95/P99) | Time series | Authentication callout latency percentiles |
+
+### Proxy Latency
+
+| Panel | Type | Description |
+|-------|------|-------------|
+| Preread Phase Latency | Time series | Combined latency for packet parsing, rate limiting, and auth (P50/P95/P99) |
+| Upstream Broker Connect Latency | Time series | Time to establish connection to the core broker (P50/P95/P99) |
+| Packet Forward Latency by Direction | Time series | MQTT packet forwarding latency, client→broker and broker→client (P95/P99) |
+| End-to-End Connection Setup Latency | Time series | Total time for complete connection establishment (P50/P95/P99) |
+
+### Connections
+
+| Panel | Type | Description |
+|-------|------|-------------|
+| Connections Opened/Rejected | Time series | Rate of connection opens vs rejections |
+| Rejection Reasons | Pie chart | Distribution of rejection reasons (auth failed, rate limited, etc.) |
+
+### MQTT Packets
+
+| Panel | Type | Description |
+|-------|------|-------------|
+| Packets/sec by Type | Time series | Packet throughput by MQTT packet type (CONNECT, PUBLISH, SUBSCRIBE, etc.) |
+| Bytes/sec by Type | Time series | Data throughput by MQTT packet type |
+| Inbound vs Outbound | Time series | Packet rates split by direction |
+
+### Broker
+
+| Panel | Type | Description |
+|-------|------|-------------|
+| Message Throughput | Time series | Broker message throughput (total, successful, failed) |
+| Broker JVM Heap | Time series | Broker memory usage and limits |
+
+### Infrastructure Health
+
+| Panel | Type | Description |
+|-------|------|-------------|
+| Service Health | Stat | UP/DOWN status for all platform components |
+| Cache Clients | Time series | Connected and blocked clients on the session cache |
+| Message Bus Throughput | Time series | Produce and consume throughput on the message bus |
 
 ## Performance
 
