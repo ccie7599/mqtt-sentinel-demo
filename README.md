@@ -33,10 +33,10 @@ MQTT Sentinel operates as a transparent security layer between IoT devices and y
 
 | Diagram | Description |
 |---------|-------------|
-| [Architecture Overview](diagrams/mqtt-sentinel-architecture.drawio) | End-to-end flow from devices through Sentinel to customer origin |
-| [Proxy Layer Detail](diagrams/proxy-layer-detail.drawio) | TLS termination, rate limiting pipeline, auth callout, MQTT validation |
-| [Security Inspection](diagrams/security-inspection.drawio) | Pattern matching, anomaly detection, message buffering pipeline |
-| [Bridge & Origin](diagrams/bridge-and-origin.drawio) | MQTT-to-WebSocket conversion, WAF integration, customer origin |
+| [Architecture Overview](images/mqtt-sentinel-architecture.png) | End-to-end flow from devices through Sentinel to customer origin |
+| [Proxy Layer Detail](images/proxy-layer-detail.png) | TLS termination, rate limiting pipeline, auth callout, MQTT validation |
+| [Security Inspection](images/security-inspection.png) | Pattern matching, anomaly detection, message buffering pipeline |
+| [Bridge & Origin](images/bridge-and-origin.png) | MQTT-to-WebSocket conversion, WAF integration, customer origin |
 
 ## Demo
 
