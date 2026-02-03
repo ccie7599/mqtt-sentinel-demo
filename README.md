@@ -1,195 +1,133 @@
 # MQTT Sentinel
 
-**Secure MQTT at Scale — Millions of Concurrent Connections**
+**Distributed MQTT Security Platform — Protecting IoT at Scale**
 
-MQTT Sentinel is an enterprise-grade security layer for MQTT deployments, providing real-time threat detection, authentication, and message inspection at massive scale.
+MQTT Sentinel is a multi-layered security platform that protects MQTT deployments with distributed edge proxies, deep packet inspection, and seamless integration with existing WAF infrastructure. Designed for millions of concurrent device connections with real-time threat detection and total observability.
 
-## Key Capabilities
+## Architecture
 
-| Feature | Description |
+![MQTT Sentinel Architecture](images/mqtt-sentinel-architecture.png)
+
+MQTT Sentinel operates as a transparent security layer between IoT devices and your origin infrastructure:
+
+| Layer | Function |
+|-------|----------|
+| **Proxy Layer** | Distributed, multi-region edge proxies handling TLS termination, rate limiting, authentication, and MQTT protocol validation |
+| **Core Broker** | Centralized message broker with payload inspection, anomaly detection, and 72-hour message buffering |
+| **Bridge Service** | Protocol conversion from MQTT to WebSockets, enabling traffic to pass through existing WAF infrastructure |
+| **Customer WAF** | Your existing Akamai or F5 WAF inspects WebSocket traffic before it reaches origin |
+| **Customer Origin** | Envoy proxy fronting Mosquitto broker, with PerconaDB for device authentication |
+
+## Key Benefits
+
+| Benefit | Description |
 |---------|-------------|
-| **Massive Scale** | Millions of concurrent device connections with realtime latency |
-| **Fan-Out Distribution** | Efficient alert delivery to millions of subscribers |
-| **Real-Time Security** | Pattern matching, anomaly detection, and threat prevention |
-| **Authentication** | Secure device authentication with automatic credential validation |
-| **Observability** | Comprehensive Grafana dashboards for health and security monitoring |
-| **Message Retention** | 72-hour message history with distributed persistence |
+| **Distributed Security** | Proxy layer deployed multi-region, close to devices. Absorb attacks at the edge before they reach your origin. |
+| **L3/L4 DDoS Protection** | Edge proxies absorb volumetric and protocol-level attacks with multi-tier rate limiting (global, per-IP, per-client, per-packet-type). |
+| **Application Layer Protection** | MQTT 3.1.1 protocol validation at the proxy, plus deep payload inspection at the broker (SQL injection, XSS, command injection, path traversal detection). |
+| **Origin Protection** | MQTT protocol converted to WebSockets by the Bridge Service, making all traffic inspectable by your existing WAF (Akamai / F5). No direct MQTT exposure to origin. |
+| **Total Observability** | Prometheus metrics and Grafana dashboards across all layers — proxy connections, rate limit events, auth results, inspection findings, and bridge throughput. |
+| **Performance & Scale** | 1,000,000+ concurrent connections, sub-50ms message delivery (P99), 72-hour message retention with 3x replication. |
 
-## Architecture Overview
+## Detailed Diagrams
 
-```
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│                              CUSTOMER ORIGIN                                     │
-│                                                                                  │
-│  ┌─────────────┐         ┌─────────────┐                                        │
-│  │   Auth DB   │         │  Mosquitto  │                                        │
-│  │  (Clients)  │         │   Broker    │                                        │
-│  └──────▲──────┘         └──────┬──────┘                                        │
-│         │                       │                                                │
-└─────────┼───────────────────────┼───────────────────────────────────────────────┘
-          │                       │
-          │ Auth Callout          │ WebSocket Bridge
-          │ (in-band)             ▼
-          │              ┌────────────────┐
-          │              │      WAF       │
-          │              └───────┬────────┘
-          │                      │
-          │                      ▼
-┌─────────┼──────────────────────────────────────────────────────────────────────┐
-│         │                  MQTT SENTINEL                                        │
-│         │     Secure MQTT at Scale — Millions of Connections                    │
-├─────────┼──────────────────────────────────────────────────────────────────────┤
-│         │                                                                       │
-│  ┌──────┴────────────────────────────────────────────────────────────────────┐ │
-│  │              Distributed Real-Time Message Broker                          │ │
-│  │                    (72-hour message retention)                             │ │
-│  └─────────────────────────────────┬─────────────────────────────────────────┘ │
-│                                    │                                            │
-│     ┌──────────────────────────────┼──────────────────────────────┐            │
-│     │                              │                              │            │
-│     ▼                              ▼                              ▼            │
-│ ┌────────┐                    ┌────────┐                    ┌──────────┐       │
-│ │ user1  │                    │ user2  │        ...         │ user N   │       │
-│ │(client)│                    │(client)│                    │ (client) │       │
-│ └────────┘                    └────────┘                    └──────────┘       │
-│                                                                                 │
-│  ┌─────────────────┐     ┌──────────────┐                                      │
-│  │ Threat Defense  │     │   Sentinel   │                                      │
-│  │ • Pattern Match │     │  Dashboard   │                                      │
-│  │ • Anomaly Det.  │     │  (Grafana)   │                                      │
-│  └─────────────────┘     └──────────────┘                                      │
-│                                                                                 │
-└────────────────────────────────────────────────────────────────────────────────┘
-```
+| Diagram | Description |
+|---------|-------------|
+| [Architecture Overview](diagrams/mqtt-sentinel-architecture.drawio) | End-to-end flow from devices through Sentinel to customer origin |
+| [Proxy Layer Detail](diagrams/proxy-layer-detail.drawio) | TLS termination, rate limiting pipeline, auth callout, MQTT validation |
+| [Security Inspection](diagrams/security-inspection.drawio) | Pattern matching, anomaly detection, message buffering pipeline |
+| [Bridge & Origin](diagrams/bridge-and-origin.drawio) | MQTT-to-WebSocket conversion, WAF integration, customer origin |
 
-## Demo Scenario
-
-This demo showcases MQTT Sentinel handling a realistic enterprise workload:
-
-| Parameter | Value |
-|-----------|-------|
-| Concurrent Clients | 1,500,000 |
-| Message Pattern | Fan-out (alerts to per-client topics) |
-| Message Rate | ~600 msg/sec aggregate |
-| Payload | Plain text alerts |
-| QoS | 1 (at least once delivery) |
-| Retention | 72 hours |
-| Topic Pattern | `clients/{client_id}/alerts` |
-
-## Quick Start
+## Demo
 
 ### Prerequisites
 
-- Docker and Docker Compose
-- Python 3.9+
-- Access to MQTT Sentinel cluster
+- `mosquitto-clients` package installed (`brew install mosquitto` on macOS)
+- Network access to the MQTT Sentinel cluster
+- Grafana dashboard access
 
-### Running the Demo
+### Live Demo Walkthrough
 
-1. **Populate the authentication database:**
-   ```bash
-   ./demo/scripts/populate-db.sh
-   ```
-
-2. **Start the demo environment:**
-   ```bash
-   ./demo/scripts/run-demo.sh
-   ```
-
-3. **Launch subscriber load test:**
-   ```bash
-   cd demo/loadtest
-   pip install -r requirements.txt
-   locust -f locustfile.py --host=mqtts://sentinel.example.com:8883
-   ```
-
-4. **Start the alert publisher:**
-   ```bash
-   cd demo/publisher
-   pip install -r requirements.txt
-   python alert_publisher.py
-   ```
-
-5. **Open Grafana dashboards:**
-   - System Health: http://localhost:3000/d/sentinel-health
-   - Security Alerts: http://localhost:3000/d/sentinel-security
-
-### Security Injection Testing
-
-Trigger security scenarios to see threat detection in action:
+Run the interactive demo script that walks through each capability:
 
 ```bash
-./demo/scripts/inject-security.sh
+./demo/scripts/demo-walkthrough.sh
 ```
 
-This will simulate:
-- Authentication failures
-- Rate anomalies (burst attacks)
-- Pattern violations (injection attempts)
-- Payload size anomalies
-- High entropy detection
+This demonstrates:
+1. Platform health and connection metrics
+2. Device authentication (valid + invalid credentials)
+3. Rate limiting under burst traffic
+4. Security inspection catching malicious payloads
+5. Grafana dashboard visualization
+6. Scale metrics
+
+### Traffic Simulation
+
+Generate continuous bad traffic to visualize security events in Grafana:
+
+```bash
+# Run all attack types in a loop
+./demo/scripts/simulate-bad-traffic.sh
+
+# Run specific attack type
+./demo/scripts/simulate-bad-traffic.sh --mode auth-flood
+./demo/scripts/simulate-bad-traffic.sh --mode injection
+./demo/scripts/simulate-bad-traffic.sh --mode connection-flood
+./demo/scripts/simulate-bad-traffic.sh --mode size-anomaly
+```
+
+### Security Scenario Injection
+
+Run discrete security test scenarios:
+
+```bash
+./demo/scripts/inject-security.sh [SCENARIO]
+# Scenarios: all, auth-failure, rate-anomaly, pattern-violation, size-anomaly, entropy
+```
+
+### Load Testing
+
+Subscriber fan-out load test using Locust:
+
+```bash
+cd demo/loadtest
+pip install -r requirements.txt
+locust -f locustfile.py --host=mqtts://mqtt.connected-cloud.io:30883
+```
 
 ## Documentation
 
-- [Architecture Overview](docs/architecture.md) — High-level system design
-- [Security Features](docs/security-features.md) — Threat detection capabilities
+- [Architecture Details](docs/architecture.md) — Detailed system design with proxy, broker, bridge, and origin layers
+- [Security Features](docs/security-features.md) — Threat detection capabilities across all layers
 
 ## Dashboards
 
 ### Sentinel Health Dashboard
-Monitor system health including:
-- Connected device count
-- Alert throughput (target: 600 msg/sec)
+- Connected device count across all proxy regions
+- Message throughput and fan-out delivery rate
+- Auth latency (P50, P95, P99)
+- Message retention and buffer utilization
 - Cluster health status
-- Message retention metrics
-- System latency (P50, P95, P99)
 
 ### Sentinel Security Dashboard
-Track security events including:
 - Threat score indicator
-- Authentication failures
-- Blocked messages
-- Pattern violations
-- Anomaly events
-- Security event log
+- Rate limit rejections by tier (global, per-IP, per-client)
+- Authentication failures per minute
+- Pattern violations detected (SQLi, XSS, command injection)
+- Anomaly events (rate, size, entropy)
+- Security event log (50 most recent)
 
-## Message Flow
+## Performance
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                           CUSTOMER ORIGIN                                    │
-│                                                                              │
-│  ┌─────────────┐        ┌─────────────┐                                     │
-│  │   Auth DB   │        │  Mosquitto  │◀─── Alert Publisher (~600 msg/sec)  │
-│  │  (Clients)  │        │   Broker    │                                     │
-│  └──────▲──────┘        └──────┬──────┘                                     │
-│         │                      │                                             │
-└─────────┼──────────────────────┼────────────────────────────────────────────┘
-          │                      │
-          │ Auth Callout         │ WebSocket Bridge
-          │ (in-band)            ▼
-          │             ┌────────────────┐
-          │             │      WAF       │
-          │             └───────┬────────┘
-          │                     │
-          │                     ▼
-┌─────────┼───────────────────────────────────────────────────────────────────┐
-│         │                  MQTT SENTINEL                                     │
-│  ┌──────┴────────────────────────────────────────────────────────────────┐  │
-│  │           Distributed Real-Time Message Broker                         │  │
-│  │                  (72-hour message retention)                           │  │
-│  │               Topics: clients/{client_id}/alerts                       │  │
-│  └─────────────────────────────┬─────────────────────────────────────────┘  │
-│                                │                                             │
-│      ┌─────────────────────────┼─────────────────────────┐                  │
-│      ▼                         ▼                         ▼                  │
-│  ┌───────┐                ┌───────┐               ┌───────────┐            │
-│  │ user1 │                │ user2 │      ...      │  user N   │            │
-│  └───────┘                └───────┘               └───────────┘            │
-│                                                                             │
-│  Each device receives ONLY alerts for their own topic                       │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
+| Metric | Target |
+|--------|--------|
+| Concurrent Connections | 1,000,000+ |
+| Message Throughput | 600+ msg/sec |
+| Auth Latency (P99) | < 10ms |
+| Message Delivery (P99) | < 50ms |
+| Availability | 99.99% |
+| Message Retention | 72 hours |
 
 ## License
 

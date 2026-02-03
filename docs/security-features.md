@@ -2,66 +2,98 @@
 
 ## Overview
 
-MQTT Sentinel provides comprehensive security capabilities designed to protect IoT deployments at scale. All messages pass through a multi-layer security inspection pipeline before delivery.
+MQTT Sentinel provides defense-in-depth across three layers: the distributed proxy layer, the core broker inspection engine, and the bridge-to-WAF origin protection. Each layer adds distinct security capabilities that work together to protect IoT deployments.
 
-## Security Pipeline
+## Three-Layer Security Model
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                    Security Inspection Pipeline                  │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│  Incoming    ┌──────────┐   ┌──────────┐   ┌──────────┐        │
-│  Message ───▶│ Pattern  │──▶│ Anomaly  │──▶│  Auth    │──▶ OK  │
-│              │ Matching │   │Detection │   │ Verify   │        │
-│              └────┬─────┘   └────┬─────┘   └────┬─────┘        │
-│                   │              │              │               │
-│                   ▼              ▼              ▼               │
-│              ┌─────────────────────────────────────────┐       │
-│              │         Security Event Log              │       │
-│              │         (Grafana Dashboard)             │       │
-│              └─────────────────────────────────────────┘       │
-│                                                                  │
-└─────────────────────────────────────────────────────────────────┘
+Layer 1: Proxy (Edge)           Layer 2: Core Broker         Layer 3: Bridge + WAF
+─────────────────────           ────────────────────         ──────────────────────
+• TLS termination               • Pattern matching           • Protocol conversion
+• Multi-tier rate limiting      • Anomaly detection          • WAF-friendly traffic
+• Auth callout                  • Payload quarantine         • Origin isolation
+• MQTT validation               • Security event logging     • Geo-blocking
+• L3/L4 DDoS absorption        • Message buffering          • Bot detection
 ```
 
-## Pattern Matching
+## Layer 1: Proxy Layer Security
 
-### Valid Payload Detection
+### Rate Limiting
 
-For the alert system, valid payloads must match expected patterns:
+The proxy enforces rate limits at six tiers before traffic reaches the core broker:
 
-| Rule | Pattern | Action |
-|------|---------|--------|
-| Valid Alert | `^ALERT$` | Allow |
-| Any Other | `.*` | Flag for review |
+| Tier | Key | Default | Purpose |
+|------|-----|---------|---------|
+| Global | All traffic | 10K req/s | Platform-wide flood protection |
+| Per-IP | Source IP | 100 req/s | Single-source attack mitigation |
+| CONNECT | Source IP | 10 req/s | Authentication brute-force prevention |
+| PUBLISH | Client ID | 100 req/s | Message flood prevention |
+| SUBSCRIBE | Client ID | 20 req/s | Subscription abuse prevention |
+| Per-Client | Client ID | 50 req/s | Per-device rate cap |
 
-### Threat Pattern Detection
+Rate limit rejections are handled per MQTT packet type:
+- **CONNECT**: CONNACK with return code 0x05 (Not Authorized)
+- **PUBLISH QoS 0**: Dropped silently
+- **PUBLISH QoS 1+**: No PUBACK (client retries with backoff)
+- **SUBSCRIBE**: SUBACK with failure code 0x80
 
-The following patterns trigger security alerts:
+### Authentication
 
-| Threat Type | Pattern Example | Severity |
-|-------------|-----------------|----------|
-| SQL Injection | `' OR '1'='1` | High |
-| Command Injection | `; cat /etc/passwd` | Critical |
-| XSS Attempt | `<script>` | High |
-| Path Traversal | `../../../` | High |
+Device authentication uses an external callout to the customer's PerconaDB:
 
-### Configuration
+```
+Client                    Proxy                  Customer PerconaDB
+  │                         │                           │
+  │── CONNECT ─────────────>│                           │
+  │  (client_id, user, pw)  │                           │
+  │                         │── Check auth cache ──>    │
+  │                         │   (miss)                  │
+  │                         │── HTTP POST /mqtt/auth ──>│
+  │                         │   {client_id, user, pw}   │
+  │                         │<── 200 OK / 401 Denied ───│
+  │                         │── Cache result (60s) ──>  │
+  │<── CONNACK (allow/deny)─│                           │
+```
 
-Pattern rules are defined in YAML format:
+- Fail-closed: unreachable auth service = connection denied
+- Cache TTL: 60 seconds (configurable)
+- Auth results logged for audit
+
+### MQTT Protocol Validation
+
+The proxy parses every MQTT packet and enforces:
+- Protocol name "MQTT" with level 4 (MQTT 3.1.1)
+- First packet must be CONNECT
+- Valid remaining length encoding (1-4 bytes)
+- Valid packet types (1-14)
+- Required fields present per packet type
+
+Malformed packets are rejected at the edge before reaching the broker.
+
+### L3/L4 DDoS Protection
+
+The distributed proxy fleet provides:
+- Geographic distribution absorbs volumetric attacks regionally
+- TCP connection limits per source IP
+- Horizontal scaling by adding proxy nodes
+- Rate limiting at multiple tiers prevents amplification
+
+## Layer 2: Core Broker Security
+
+### Pattern Matching (Signature-Based Detection)
+
+The inspection engine scans all message payloads against threat signatures:
+
+| Threat Type | Pattern Examples | Severity | Action |
+|-------------|-----------------|----------|--------|
+| SQL Injection | `' OR '1'='1`, `UNION SELECT`, `DROP TABLE` | High | Block |
+| Command Injection | `; cat /etc/passwd`, `&& rm -rf`, `$(curl ...)` | Critical | Block |
+| XSS | `<script>`, `javascript:`, `onerror=` | High | Block |
+| Path Traversal | `../../../etc/passwd`, `..\\windows\\` | High | Block |
+
+Pattern rules are configurable in YAML format:
 
 ```yaml
-alert_validation:
-  - name: valid_alert_payload
-    pattern: "^ALERT$"
-    action: allow
-
-  - name: suspicious_payload
-    pattern: ".*"
-    action: flag
-    severity: medium
-
 threat_patterns:
   - name: sql_injection
     pattern: "('|\")?\\s*(OR|AND)\\s+.*=.*"
@@ -79,145 +111,112 @@ threat_patterns:
     severity: high
 ```
 
-## Anomaly Detection
+### Anomaly Detection (Behavioral Analysis)
 
-### Heuristic Analysis
+The broker tracks behavioral baselines and detects deviations:
 
-MQTT Sentinel employs multiple heuristics to detect anomalous behavior:
-
-#### Rate Anomaly Detection
+#### Rate Anomaly
 - **Baseline**: Normal connection rate per client
-- **Threshold**: 100+ connections/second triggers alert
-- **Action**: Rate limiting applied, event logged
+- **Threshold**: 100+ connections/second
+- **Action**: Rate limit applied, security event logged
+- **Dashboard**: Rate anomaly counter, source breakdown
 
-#### Size Anomaly Detection
-- **Baseline**: Expected payload size for message type
-- **Threshold**: Payloads exceeding 10KB flagged
+#### Size Anomaly
+- **Baseline**: Expected payload size per message type
+- **Threshold**: Payloads exceeding 10KB
 - **Action**: Message quarantined, event logged
+- **Dashboard**: Size anomaly counter, payload size histogram
 
-#### Entropy Detection
-- **Purpose**: Detect encrypted/encoded malicious payloads
-- **Method**: Shannon entropy calculation
-- **Threshold**: Entropy > 7.5 indicates potential binary/encrypted data
-- **Action**: Flag for review, event logged
+#### Entropy Anomaly
+- **Purpose**: Detect encrypted, compressed, or encoded malicious payloads
+- **Method**: Shannon entropy calculation on payload bytes
+- **Threshold**: Entropy > 7.5 (high entropy indicates binary/encrypted data)
+- **Action**: Flagged for review, event logged
+- **Dashboard**: Entropy anomaly counter
 
-### Behavioral Analysis
+## Layer 3: Origin Protection
 
-```
-┌────────────────────────────────────────────────────────────┐
-│                  Behavioral Baselines                       │
-├────────────────────────────────────────────────────────────┤
-│                                                            │
-│  Client Behavior Profile                                   │
-│  ├── Normal connection frequency                           │
-│  ├── Typical message rate                                  │
-│  ├── Expected payload sizes                                │
-│  └── Geographic access patterns                            │
-│                                                            │
-│  Deviation Detection                                       │
-│  ├── Sudden rate increase → Rate Anomaly                  │
-│  ├── Unusual payload size → Size Anomaly                  │
-│  ├── New geographic origin → Location Anomaly             │
-│  └── Off-hours activity → Temporal Anomaly                │
-│                                                            │
-└────────────────────────────────────────────────────────────┘
-```
+### Protocol Conversion
 
-## Authentication
+The Bridge Service converts MQTT traffic to WebSockets before it reaches the customer origin. This is the key architectural decision that enables origin protection:
 
-### Client Authentication Flow
+**Problem**: Raw MQTT is a binary protocol that standard WAFs cannot inspect.
 
-```
-┌────────┐      ┌─────────────┐      ┌──────────┐
-│ Client │─────▶│  Sentinel   │─────▶│  Auth    │
-│        │ TLS  │   Gateway   │      │  Service │
-└────────┘      └──────┬──────┘      └────┬─────┘
-                       │                   │
-                       │ Verify Client ID  │
-                       │◀──────────────────│
-                       │                   │
-                       │   ┌───────────┐   │
-                       │   │ Auth DB   │   │
-                       │   │ 1.5M      │   │
-                       │   │ clients   │   │
-                       │   └───────────┘   │
-                       │                   │
-                ┌──────┴──────┐            │
-                │  Allow/Deny │            │
-                └─────────────┘            │
-```
+**Solution**: Convert to WebSockets (WSS), which WAFs like Akamai and F5 can analyze at the application layer.
 
-### Authentication Events
+### WAF Integration
 
-| Event | Description | Dashboard Display |
-|-------|-------------|-------------------|
-| Auth Success | Valid client authenticated | Green indicator |
-| Auth Failure | Invalid client ID rejected | Red counter |
-| Auth Timeout | Auth service unreachable | Yellow warning |
+With traffic converted to WebSockets, the customer's existing WAF provides:
+- Application-layer payload inspection
+- Bot detection and mitigation
+- Geographic access controls
+- Additional rate limiting
+- DDoS mitigation at the WAF edge
+
+### Origin Isolation
+
+The customer's origin (Envoy + Mosquitto) is never exposed to raw MQTT traffic from the internet:
+- All device connections terminate at the proxy layer
+- Bridge Service initiates outbound WebSocket connections to origin
+- Origin only accepts connections from the Bridge Service
+- No inbound internet traffic reaches origin directly
 
 ## Security Scenarios
 
-### Scenario 1: Authentication Failure
+### Scenario 1: Authentication Brute Force
 
-**Trigger**: Connection attempt with invalid client ID
-```bash
-mosquitto_pub -u "invalid-user-xyz" -t "test" -m "test"
-```
+**Attack**: Rapid CONNECT attempts with invalid credentials.
 
-**Expected Response**:
-- Connection rejected
-- Auth failure logged
-- Dashboard counter incremented
+**Defense chain**:
+1. Proxy CONNECT rate limit (10 req/s per IP) throttles attempts
+2. Per-IP rate limit (100 req/s) caps total traffic
+3. Auth callout denies invalid credentials
+4. Security event logged with source IP
+5. Grafana dashboard shows auth failure spike
 
-### Scenario 2: Rate Anomaly (Burst Attack)
+### Scenario 2: Message Injection Attack
 
-**Trigger**: Rapid connection attempts
-```bash
-for i in {1..100}; do
-  mosquitto_pub -u "attacker$i" -t "test" -m "ALERT" &
-done
-```
+**Attack**: Authenticated client sends payload containing SQL injection.
 
-**Expected Response**:
-- Rate limit triggered
-- Anomaly alert generated
-- Source IP flagged
+**Defense chain**:
+1. Proxy validates MQTT protocol structure (passes — valid MQTT)
+2. Core broker pattern matcher detects SQL injection signature
+3. Message blocked, not delivered to subscribers
+4. Security event logged with payload hash and client ID
+5. Grafana dashboard shows pattern violation alert
 
-### Scenario 3: Pattern Violation (Injection Attempt)
+### Scenario 3: Volumetric DDoS
 
-**Trigger**: Malicious payload
-```bash
-mosquitto_pub -u "user1" -t "inject" -m "ALERT; cat /etc/passwd"
-```
+**Attack**: Flood of TCP connections from distributed sources.
 
-**Expected Response**:
-- Message blocked
-- Security alert: Command injection detected
-- Event logged with full payload
+**Defense chain**:
+1. Regional proxy fleet absorbs traffic geographically
+2. Global rate limit (10K req/s) caps platform-wide throughput
+3. Per-IP limits (100 req/s) throttle individual sources
+4. Core broker never sees the attack traffic
+5. Origin is completely isolated
 
-### Scenario 4: Size Anomaly
+### Scenario 4: Encoded Payload Exfiltration
 
-**Trigger**: Oversized payload
-```bash
-mosquitto_pub -u "user1" -t "test" -m "$(head -c 100000 /dev/urandom | base64)"
-```
+**Attack**: Data exfiltration using base64-encoded payloads in MQTT messages.
 
-**Expected Response**:
-- Message quarantined
-- Size anomaly alert
-- Payload hash logged
+**Defense chain**:
+1. Proxy passes the valid MQTT packet
+2. Core broker entropy detector flags Shannon entropy > 7.5
+3. Message flagged for review
+4. Security event logged
+5. Grafana dashboard shows entropy anomaly
 
-### Scenario 5: High Entropy Detection
+### Scenario 5: Oversized Payload
 
-**Trigger**: Encoded/encrypted payload
-```bash
-mosquitto_pub -u "user1" -t "test" -m "$(echo 'malicious binary' | base64)"
-```
+**Attack**: Abnormally large payload to exploit buffer vulnerabilities.
 
-**Expected Response**:
-- Entropy analysis triggered
-- High entropy alert generated
-- Message flagged for review
+**Defense chain**:
+1. Proxy validates MQTT packet structure
+2. Core broker size anomaly detector flags payload > 10KB
+3. Message quarantined
+4. Security event logged with payload size
+5. Grafana dashboard shows size anomaly
 
 ## Security Dashboard Metrics
 
@@ -225,9 +224,10 @@ mosquitto_pub -u "user1" -t "test" -m "$(echo 'malicious binary' | base64)"
 
 | Metric | Description | Alert Threshold |
 |--------|-------------|-----------------|
-| Threat Score | Composite security health | > 50 |
-| Auth Failure Rate | Failed authentications/min | > 10/min |
-| Blocked Messages | Messages blocked/min | > 5/min |
+| Threat Score | Composite security health score | > 50 |
+| Auth Failure Rate | Failed authentications per minute | > 10/min |
+| Rate Limit Rejections | Requests rejected by rate limiting | > 100/min |
+| Blocked Messages | Messages blocked by inspection | > 5/min |
 | Pattern Violations | Injection attempts detected | Any |
 | Anomaly Events | Rate/size/entropy anomalies | > 3/min |
 
@@ -238,23 +238,8 @@ The dashboard displays the 50 most recent security events:
 | Field | Description |
 |-------|-------------|
 | Timestamp | Event occurrence time |
-| Event Type | auth_failure, pattern_violation, anomaly |
+| Layer | proxy, broker, or bridge |
+| Event Type | auth_failure, rate_limit, pattern_violation, anomaly |
 | Severity | low, medium, high, critical |
 | Source | Client ID or IP address |
 | Details | Event-specific information |
-
-## Best Practices
-
-### For Operators
-
-1. **Monitor dashboards** during high-traffic periods
-2. **Review security logs** daily for emerging patterns
-3. **Update pattern rules** based on new threat intelligence
-4. **Tune anomaly thresholds** for your specific workload
-
-### For Developers
-
-1. **Use expected payload formats** (plain `ALERT` text)
-2. **Handle auth failures gracefully** with exponential backoff
-3. **Implement client-side validation** before publishing
-4. **Log security events** for debugging

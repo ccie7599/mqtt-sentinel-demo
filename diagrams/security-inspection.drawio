@@ -1,0 +1,136 @@
+<mxfile host="app.diagrams.net" modified="2026-02-03" agent="draw.io" type="device">
+  <diagram id="security-inspection" name="Security Inspection Pipeline">
+    <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="800" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Title -->
+        <mxCell id="title" value="MQTT Sentinel — Core Broker Security Inspection" style="text;html=1;fontSize=20;fontStyle=1;align=center;verticalAlign=middle;fillColor=none;strokeColor=none;fontColor=#2d5016;" vertex="1" parent="1">
+          <mxGeometry x="300" y="10" width="800" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- Input -->
+        <mxCell id="input" value="Validated MQTT Traffic&#xa;(from Proxy Layer)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;fontStyle=1;fontColor=#1a3a5c;" vertex="1" parent="1">
+          <mxGeometry x="40" y="330" width="180" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Core Broker background -->
+        <mxCell id="broker-bg" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="270" y="60" width="880" height="680" as="geometry" />
+        </mxCell>
+        <mxCell id="broker-title" value="Core Broker — Security Inspection Pipeline" style="text;html=1;fontSize=15;fontStyle=1;align=left;fillColor=none;strokeColor=none;fontColor=#2d5016;" vertex="1" parent="1">
+          <mxGeometry x="285" y="65" width="400" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Pattern Matching Section -->
+        <mxCell id="pattern-bg" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;strokeWidth=1;" vertex="1" parent="1">
+          <mxGeometry x="300" y="110" width="380" height="260" as="geometry" />
+        </mxCell>
+        <mxCell id="pattern-title" value="Pattern Matching (Signature-Based)" style="text;html=1;fontSize=13;fontStyle=1;align=center;fillColor=none;strokeColor=none;fontColor=#2d5016;" vertex="1" parent="1">
+          <mxGeometry x="310" y="115" width="360" height="25" as="geometry" />
+        </mxCell>
+
+        <mxCell id="pat-sql" value="SQL Injection Detection&#xa;' OR '1'='1, UNION SELECT, DROP TABLE" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#cc0000;fontColor=#ffffff;strokeColor=#990000;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="320" y="150" width="340" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="pat-cmd" value="Command Injection Detection&#xa;; cat /etc/passwd, &amp;&amp; rm -rf, | nc, $(curl)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#cc0000;fontColor=#ffffff;strokeColor=#990000;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="320" y="200" width="340" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="pat-xss" value="XSS Detection&#xa;&lt;script&gt;, javascript:, onerror=" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#cc0000;fontColor=#ffffff;strokeColor=#990000;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="320" y="250" width="340" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="pat-path" value="Path Traversal Detection&#xa;../../../etc/passwd, ..\\..\\windows" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#cc0000;fontColor=#ffffff;strokeColor=#990000;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="320" y="300" width="340" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- Anomaly Detection Section -->
+        <mxCell id="anomaly-bg" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;strokeWidth=1;" vertex="1" parent="1">
+          <mxGeometry x="710" y="110" width="410" height="260" as="geometry" />
+        </mxCell>
+        <mxCell id="anomaly-title" value="Anomaly Detection (Behavioral)" style="text;html=1;fontSize=13;fontStyle=1;align=center;fillColor=none;strokeColor=none;fontColor=#2d5016;" vertex="1" parent="1">
+          <mxGeometry x="720" y="115" width="390" height="25" as="geometry" />
+        </mxCell>
+
+        <mxCell id="anom-rate" value="Rate Anomaly&#xa;Threshold: 100+ conn/sec&#xa;Action: Rate limit + flag" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e6550d;fontColor=#ffffff;strokeColor=#c44000;fontSize=10;align=left;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="730" y="150" width="180" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="anom-size" value="Size Anomaly&#xa;Threshold: &gt;10KB payload&#xa;Action: Quarantine + flag" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e6550d;fontColor=#ffffff;strokeColor=#c44000;fontSize=10;align=left;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="730" y="220" width="180" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="anom-entropy" value="Entropy Anomaly&#xa;Threshold: Shannon &gt;7.5&#xa;Action: Flag for review" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e6550d;fontColor=#ffffff;strokeColor=#c44000;fontSize=10;align=left;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="730" y="290" width="180" height="55" as="geometry" />
+        </mxCell>
+
+        <!-- Severity indicators -->
+        <mxCell id="sev-crit" value="CRITICAL" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#990000;fontColor=#ffffff;strokeColor=none;fontSize=9;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="930" y="163" width="70" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="sev-high" value="HIGH" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#cc6600;fontColor=#ffffff;strokeColor=none;fontSize=9;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="930" y="233" width="70" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="sev-med" value="MEDIUM" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ccaa00;fontColor=#ffffff;strokeColor=none;fontSize=9;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="930" y="303" width="70" height="22" as="geometry" />
+        </mxCell>
+
+        <!-- Decision: Allow / Block -->
+        <mxCell id="decision" value="Allow /&#xa;Block" style="rhombus;whiteSpace=wrap;html=1;fillColor=#2d7600;fontColor=#ffffff;strokeColor=#185200;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="470" y="410" width="100" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Message Buffering -->
+        <mxCell id="buffer-bg" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;strokeWidth=1;" vertex="1" parent="1">
+          <mxGeometry x="300" y="530" width="380" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="buffer-title" value="Message Buffering (JetStream)" style="text;html=1;fontSize=13;fontStyle=1;align=center;fillColor=none;strokeColor=none;fontColor=#2d5016;" vertex="1" parent="1">
+          <mxGeometry x="310" y="535" width="360" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="buffer-detail" value="72-hour retention  |  3x replication  |  File-backed storage  |  Ordered delivery" style="text;html=1;fontSize=11;align=center;fillColor=none;strokeColor=none;fontColor=#555555;fontStyle=2;" vertex="1" parent="1">
+          <mxGeometry x="310" y="565" width="360" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="buffer-stream" value="Stream: clients.*.alerts" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2d7600;fontColor=#ffffff;strokeColor=#185200;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="380" y="595" width="200" height="25" as="geometry" />
+        </mxCell>
+
+        <!-- Security Event Aggregation -->
+        <mxCell id="sec-events-bg" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;strokeWidth=1;" vertex="1" parent="1">
+          <mxGeometry x="710" y="410" width="410" height="220" as="geometry" />
+        </mxCell>
+        <mxCell id="sec-events-title" value="Security Event Aggregation" style="text;html=1;fontSize=13;fontStyle=1;align=center;fillColor=none;strokeColor=none;fontColor=#5c3566;" vertex="1" parent="1">
+          <mxGeometry x="720" y="415" width="390" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="sec-prom" value="Prometheus Metrics&#xa;• inspector_patterns_matched&#xa;• inspector_anomalies_detected&#xa;• inspector_messages_blocked" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#7c3aed;fontColor=#ffffff;strokeColor=#5b21b6;fontSize=10;align=left;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="730" y="450" width="220" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="sec-grafana" value="Grafana Security Dashboard&#xa;• Threat score&#xa;• Auth failures/min&#xa;• Blocked messages&#xa;• Pattern violations&#xa;• Security event log" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#7c3aed;fontColor=#ffffff;strokeColor=#5b21b6;fontSize=10;align=left;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="730" y="535" width="220" height="85" as="geometry" />
+        </mxCell>
+        <mxCell id="sec-alert" value="Alerts" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#cc0000;fontColor=#ffffff;strokeColor=#990000;fontSize=10;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="975" y="475" width="80" height="35" as="geometry" />
+        </mxCell>
+
+        <!-- Arrows -->
+        <mxCell id="in-arrow" value="" style="endArrow=block;endFill=1;html=1;strokeWidth=3;strokeColor=#0066cc;" edge="1" parent="1" source="input" target="pattern-bg">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="pat-dec" value="" style="endArrow=block;endFill=1;html=1;strokeWidth=2;strokeColor=#2d7600;" edge="1" parent="1" source="pattern-bg" target="decision">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dec-buffer" value="Allow" style="endArrow=block;endFill=1;html=1;strokeWidth=2;strokeColor=#2d7600;fontSize=10;fontColor=#2d7600;" edge="1" parent="1" source="decision" target="buffer-bg">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dec-block" value="Block" style="endArrow=block;endFill=1;html=1;strokeWidth=2;strokeColor=#cc0000;fontSize=10;fontColor=#cc0000;" edge="1" parent="1" source="decision" target="sec-events-bg">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Output -->
+        <mxCell id="output" value="→ Bridge Service" style="text;html=1;fontSize=13;fontStyle=1;align=center;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#7a6000;rounded=1;" vertex="1" parent="1">
+          <mxGeometry x="340" y="660" width="200" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="out-arrow" value="" style="endArrow=block;endFill=1;html=1;strokeWidth=2;strokeColor=#d6b656;" edge="1" parent="1" source="buffer-bg" target="output">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
