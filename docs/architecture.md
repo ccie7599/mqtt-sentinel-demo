@@ -4,11 +4,33 @@
 
 MQTT Sentinel is a multi-layered security platform that sits between IoT devices and customer origin infrastructure. It provides distributed edge security, deep packet inspection, and origin protection by converting MQTT traffic to WAF-friendly WebSockets.
 
-The architecture consists of four distinct layers, each with a specific security and operational role.
+The architecture consists of platform-level network security plus four distinct application layers, each with a specific security and operational role.
 
 ## End-to-End Architecture
 
 ![Architecture Overview](../images/mqtt-sentinel-architecture.png)
+
+## Platform-Level Network Security
+
+Before traffic reaches any MQTT Sentinel component, it is protected by infrastructure-level network security provided by the Linode compute platform.
+
+### Region-Level DDoS Protection
+
+Every Linode region includes always-on DDoS mitigation at the network edge. Volumetric attacks (UDP/ICMP floods, amplification), protocol-level attacks (SYN floods, fragmented packets), and network-layer anomalies are detected and dropped before reaching compute instances. This protection is automatic with no configuration or performance impact during normal operation.
+
+### Akamai Prolexic Routed On-Demand
+
+For sustained or large-scale network-layer attacks, Akamai Prolexic routed on-demand provides additional scrubbing capacity:
+
+| Aspect | Detail |
+|--------|--------|
+| Activation | On-demand — traffic rerouted to scrubbing centers when attack detected |
+| Scrubbing | Network-layer inspection at Prolexic's globally distributed scrubbing centers |
+| Return Path | Clean traffic returned to Linode region via GRE tunnels |
+| Capacity | Multi-terabit attack absorption |
+| Coverage | All platform IP space used by MQTT Sentinel proxy and broker instances |
+
+Together, region-level DDoS and Prolexic handle network-layer (L3/L4) volumetric attacks at the infrastructure edge, before the MQTT Sentinel application layers handle protocol-specific security.
 
 ## Layer 1: Proxy Layer (Distributed, Multi-Region)
 
@@ -188,17 +210,18 @@ The proxy layer supports multi-region deployment for geographic distribution:
 
 ## Traffic Flow Summary
 
-1. **Device connects** to nearest regional proxy on port 8883 (MQTTS)
-2. **Proxy terminates TLS** and parses the MQTT CONNECT packet
-3. **Rate limiter checks** global, per-IP, and CONNECT-specific limits
-4. **Auth callout** validates credentials against customer's PerconaDB
-5. **MQTT validation** confirms protocol correctness
-6. **Core broker receives** validated traffic for deep inspection
-7. **Payload inspection** checks for injection attacks and anomalies
-8. **Message buffered** in durable storage (72-hour retention)
-9. **Bridge converts** MQTT messages to WebSocket frames
-10. **Customer WAF** (Akamai/F5) inspects WebSocket traffic
-11. **Origin receives** clean traffic via Envoy into Mosquitto
+1. **Network traffic enters** Linode region — region-level DDoS drops volumetric/protocol-level attacks; Prolexic activates on-demand for large-scale events
+2. **Device connects** to nearest regional proxy on port 8883 (MQTTS)
+3. **Proxy terminates TLS** and parses the MQTT CONNECT packet
+4. **Rate limiter checks** global, per-IP, and CONNECT-specific limits
+5. **Auth callout** validates credentials against customer's PerconaDB
+6. **MQTT validation** confirms protocol correctness
+7. **Core broker receives** validated traffic for deep inspection
+8. **Payload inspection** checks for injection attacks and anomalies
+9. **Message buffered** in durable storage (72-hour retention)
+10. **Bridge converts** MQTT messages to WebSocket frames
+11. **Customer WAF** (Akamai/F5) inspects WebSocket traffic
+12. **Origin receives** clean traffic via Envoy into Mosquitto
 
 ## Observability
 
