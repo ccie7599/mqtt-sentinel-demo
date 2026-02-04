@@ -4,17 +4,63 @@
 
 MQTT Sentinel provides defense-in-depth across three layers: the distributed proxy layer, the core broker inspection engine, and the bridge-to-WAF origin protection. Each layer adds distinct security capabilities that work together to protect IoT deployments.
 
-## Three-Layer Security Model
+## Defense-in-Depth Security Model
 
 ```
-Layer 1: Proxy (Edge)           Layer 2: Core Broker         Layer 3: Bridge + WAF
-─────────────────────           ────────────────────         ──────────────────────
-• TLS termination               • Pattern matching           • Protocol conversion
-• Multi-tier rate limiting      • Anomaly detection          • WAF-friendly traffic
-• Auth callout                  • Payload quarantine         • Origin isolation
-• MQTT validation               • Security event logging     • Geo-blocking
-• L3/L4 DDoS absorption        • Message buffering          • Bot detection
+Platform: Infrastructure        Layer 1: Proxy (Edge)        Layer 2: Core Broker         Layer 3: Bridge + WAF
+────────────────────────        ─────────────────────        ────────────────────         ──────────────────────
+• Region-level DDoS             • TLS termination            • Pattern matching           • Protocol conversion
+• Prolexic on-demand            • Multi-tier rate limiting   • Anomaly detection          • WAF-friendly traffic
+  network scrubbing             • Auth callout               • Payload quarantine         • Origin isolation
+                                • MQTT validation            • Security event logging     • Geo-blocking
+                                • L3/L4 DDoS absorption      • Message buffering          • Bot detection
 ```
+
+## Platform-Level Network Security
+
+Before traffic reaches any MQTT Sentinel component, it passes through infrastructure-level network protections provided by the underlying Linode compute platform.
+
+### Region-Level DDoS Protection
+
+Every Linode region includes built-in DDoS mitigation at the network edge. This always-on protection operates at the infrastructure level and defends against:
+
+- Volumetric attacks (UDP floods, ICMP floods, amplification attacks)
+- Protocol-level attacks (SYN floods, fragmented packets)
+- Network-layer anomalies detected and dropped before reaching compute instances
+
+This protection is automatic — no configuration required, no additional cost, and no performance impact during normal operation.
+
+### Akamai Prolexic Routed On-Demand
+
+For sustained or large-scale network-layer attacks that exceed region-level DDoS capacity, Akamai Prolexic routed on-demand is implemented:
+
+- **Activation**: On-demand — traffic is rerouted to Prolexic scrubbing centers when an attack is detected
+- **Scrubbing**: Network-layer traffic is inspected and malicious packets are dropped at Prolexic's globally distributed scrubbing centers
+- **Clean traffic return**: Legitimate traffic is forwarded back to the Linode region via GRE tunnels
+- **Capacity**: Prolexic's scrubbing infrastructure absorbs multi-terabit attacks
+- **Coverage**: Protects all platform IP space used by MQTT Sentinel proxy and broker instances
+
+### How Platform Security Fits the Architecture
+
+```
+Internet Traffic
+       │
+       ▼
+┌──────────────────────────────┐
+│  Linode Region-Level DDoS    │  ← Always-on, automatic
+│  + Prolexic On-Demand        │  ← Activated during attacks
+└──────────────┬───────────────┘
+               │ Clean network traffic
+               ▼
+┌──────────────────────────────┐
+│  Layer 1: Proxy Fleet        │  ← Application-level DDoS, rate limiting
+└──────────────┬───────────────┘
+               │
+               ▼
+       Layers 2 & 3 ...
+```
+
+Platform-level protections handle network-layer (L3/L4) volumetric attacks at the infrastructure edge. The MQTT Sentinel proxy layer then handles application-layer (L7) attacks specific to the MQTT protocol. Together, these provide defense-in-depth from the network edge through to the application layer.
 
 ## Layer 1: Proxy Layer Security
 
@@ -190,11 +236,13 @@ The customer's origin (Envoy + Mosquitto) is never exposed to raw MQTT traffic f
 **Attack**: Flood of TCP connections from distributed sources.
 
 **Defense chain**:
-1. Regional proxy fleet absorbs traffic geographically
-2. Global rate limit (10K req/s) caps platform-wide throughput
-3. Per-IP limits (100 req/s) throttle individual sources
-4. Core broker never sees the attack traffic
-5. Origin is completely isolated
+1. Linode region-level DDoS drops obvious volumetric/protocol-level floods at the infrastructure edge
+2. Prolexic on-demand activates for sustained large-scale attacks, scrubbing network traffic before it reaches compute
+3. Regional proxy fleet absorbs remaining traffic geographically
+4. Global rate limit (10K req/s) caps platform-wide throughput
+5. Per-IP limits (100 req/s) throttle individual sources
+6. Core broker never sees the attack traffic
+7. Origin is completely isolated
 
 ### Scenario 4: Encoded Payload Exfiltration
 

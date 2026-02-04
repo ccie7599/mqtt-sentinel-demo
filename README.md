@@ -12,6 +12,7 @@ MQTT Sentinel operates as a transparent security layer between IoT devices and y
 
 | Layer | Function |
 |-------|----------|
+| **Platform Network Security** | Linode region-level DDoS (always-on) and Akamai Prolexic routed on-demand for network-layer scrubbing |
 | **Proxy Layer** | Distributed, multi-region edge proxies handling TLS termination, rate limiting, authentication, and MQTT protocol validation |
 | **Core Broker** | Centralized message broker with payload inspection, anomaly detection, and 72-hour message buffering |
 | **Bridge Service** | Protocol conversion from MQTT to WebSockets, enabling traffic to pass through existing WAF infrastructure |
@@ -22,6 +23,7 @@ MQTT Sentinel operates as a transparent security layer between IoT devices and y
 
 | Benefit | Description |
 |---------|-------------|
+| **Platform Network Security** | Linode region-level DDoS protection (always-on) absorbs volumetric and protocol-level attacks at the infrastructure edge. Akamai Prolexic routed on-demand provides network-layer scrubbing for sustained large-scale events. |
 | **Distributed Security** | Proxy layer deployed multi-region, close to devices. Absorb attacks at the edge before they reach your origin. |
 | **L3/L4 DDoS Protection** | Edge proxies absorb volumetric and protocol-level attacks with multi-tier rate limiting (global, per-IP, per-client, per-packet-type). |
 | **Application Layer Protection** | MQTT 3.1.1 protocol validation at the proxy, plus deep payload inspection at the broker (SQL injection, XSS, command injection, path traversal detection). |
